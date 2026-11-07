@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-labelledby="t d">
+  <title id="t">Caderno de Receitas — Projeto acadêmico de Programação III</title>
+  <desc id="d">Banner do projeto acadêmico Caderno de Receitas, API REST com Spring Boot e MySQL, para a disciplina de Programação III.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1f1a"/>
+      <stop offset="0.55" stop-color="#14382e"/>
+      <stop offset="1" stop-color="#1f5a45"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffb347"/>
+      <stop offset="1" stop-color="#ff7a45"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6e5"/>
+      <stop offset="1" stop-color="#f1dfc0"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <clipPath id="card"><rect width="1200" height="360" rx="24"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <rect width="1200" height="360" fill="url(#bg)"/>
+    <rect width="1200" height="360" fill="url(#grid)"/>
+
+    <!-- brilho decorativo -->
+    <circle cx="1080" cy="40" r="190" fill="#ffb347" opacity="0.07"/>
+    <circle cx="1140" cy="330" r="130" fill="#5ee0a0" opacity="0.07"/>
+
+    <!-- bolhas flutuantes (vapor da panela) -->
+    <g fill="#ffffff" opacity="0.18">
+      <circle cx="330" cy="300" r="5">
+        <animate attributeName="cy" values="300;240;300" dur="5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="960" cy="90" r="4">
+        <animate attributeName="cy" values="90;60;90" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="1090" cy="200" r="6">
+        <animate attributeName="cy" values="200;160;200" dur="6s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="700" cy="330" r="3">
+        <animate attributeName="cy" values="330;300;330" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+
+    <!-- ILUSTRAÇÃO: caderno + chapéu de chef -->
+    <g transform="translate(70 40)" filter="url(#shadow)">
+      <!-- chapéu -->
+      <g>
+        <circle cx="120" cy="38" r="30" fill="#ffffff"/>
+        <circle cx="86" cy="56" r="26" fill="#ffffff"/>
+        <circle cx="154" cy="56" r="26" fill="#ffffff"/>
+        <rect x="88" y="56" width="64" height="40" rx="6" fill="#ffffff"/>
+        <rect x="88" y="84" width="64" height="12" fill="#e7ecef"/>
+        <animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="3.2s" repeatCount="indefinite"/>
+      </g>
+      <!-- caderno -->
+      <rect x="40" y="110" width="200" height="190" rx="14" fill="url(#paper)"/>
+      <rect x="40" y="110" width="26" height="190" rx="14" fill="#e0612f"/>
+      <rect x="52" y="110" width="14" height="190" fill="#e0612f"/>
+      <!-- espiral -->
+      <g fill="#fff6e5" stroke="#9a3b16" stroke-width="2">
+        <circle cx="53" cy="134" r="5"/><circle cx="53" cy="164" r="5"/>
+        <circle cx="53" cy="194" r="5"/><circle cx="53" cy="224" r="5"/>
+        <circle cx="53" cy="254" r="5"/><circle cx="53" cy="284" r="5"/>
+      </g>
+      <!-- título do caderno -->
+      <text x="154" y="156" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="700" fill="#5b2a14">Receitas</text>
+      <path d="M96 168H212" stroke="#e0612f" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- linhas de texto -->
+      <g stroke="#c9b48e" stroke-width="2.5" stroke-linecap="round">
+        <path d="M96 196H212"/><path d="M96 218H196"/><path d="M96 240H208"/><path d="M96 262H180"/>
+      </g>
+      <!-- colher e garfo -->
+      <g transform="translate(215 205) rotate(18)" fill="#2d3b45">
+        <ellipse cx="0" cy="0" rx="13" ry="19"/>
+        <rect x="-3.5" y="16" width="7" height="82" rx="3.5"/>
+      </g>
+    </g>
+
+    <!-- TEXTOS -->
+    <g font-family="'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif">
+      <!-- selo -->
+      <rect x="400" y="58" width="262" height="36" rx="18" fill="url(#accent)"/>
+      <text x="531" y="82" text-anchor="middle" font-size="16" font-weight="800" letter-spacing="2.4" fill="#2a1304">PROJETO ACADÊMICO</text>
+
+      <text x="400" y="164" font-size="68" font-weight="800" fill="#ffffff">Caderno de <tspan fill="#ffb347">Receitas</tspan></text>
+      <text x="402" y="204" font-size="25" fill="#cfe7dc">API REST com Spring Boot + MySQL</text>
+
+      <path d="M402 226H1100" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5"/>
+
+      <text x="402" y="260" font-size="22" font-weight="700" fill="#ffffff">Programação III</text>
+      <text x="402" y="288" font-size="18" fill="#a9cfbf">Sistemas de Informação · Unifacol · Prof. Alisson Ferreira</text>
+
+      <!-- chips de tecnologia -->
+      <g font-size="15" font-weight="700" text-anchor="middle">
+        <rect x="402" y="306" width="96" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+        <text x="450" y="326" fill="#ffffff">Java 21</text>
+        <rect x="510" y="306" width="132" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+        <text x="576" y="326" fill="#ffffff">Spring Boot</text>
+        <rect x="654" y="306" width="100" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+        <text x="704" y="326" fill="#ffffff">MySQL</text>
+        <rect x="766" y="306" width="96" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+        <text x="814" y="326" fill="#ffffff">Maven</text>
+      </g>
+    </g>
+  </g>
+</svg>
