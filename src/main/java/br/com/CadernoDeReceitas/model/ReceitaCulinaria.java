@@ -1,8 +1,7 @@
 package br.com.CadernoDeReceitas.model;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -17,11 +16,19 @@ public class ReceitaCulinaria {
 
     @Column(nullable = false)
     private String nome;
+
     @Column(nullable = false)
     private Float duracaoDoPreparoMinutos;
-    @Column(nullable = false)
-    private ArrayList<String> ingredientes;
-    @Column(nullable = false)
-    private ArrayList<String> tutorialPreparo;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "receita_culinaria_ingredientes",
+            joinColumns = @JoinColumn(name = "receita_culinaria_id")
+    )
+    @Column(name = "ingredientes", nullable = false)
+    private List<String> ingredientes;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String tutorialPreparo;
 }
 
