@@ -8,4 +8,5 @@ public class CadernoDeReceitasApplication {
     public static void main(String[] args) {
         SpringApplication.run(CadernoDeReceitasApplication.class, args);
     }
+
 }
