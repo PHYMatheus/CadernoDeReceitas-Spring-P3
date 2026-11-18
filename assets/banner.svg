@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-labelledby="t d">
   <title id="t">Caderno de Receitas — Projeto acadêmico de Programação III</title>
-  <desc id="d">Banner do projeto acadêmico Caderno de Receitas, API REST com Spring Boot e MySQL, para a disciplina de Programação III.</desc>
+  <desc id="d">Banner do projeto acadêmico Caderno de Receitas, API REST com Spring Boot e persistência em memória, para a disciplina de Programação III.</desc>
 
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -92,7 +92,7 @@
       <text x="531" y="82" text-anchor="middle" font-size="16" font-weight="800" letter-spacing="2.4" fill="#2a1304">PROJETO ACADÊMICO</text>
 
       <text x="400" y="164" font-size="68" font-weight="800" fill="#ffffff">Caderno de <tspan fill="#ffb347">Receitas</tspan></text>
-      <text x="402" y="204" font-size="25" fill="#cfe7dc">API REST com Spring Boot + MySQL</text>
+      <text x="402" y="204" font-size="25" fill="#cfe7dc">API REST com Spring Boot · persistência em memória</text>
 
       <path d="M402 226H1100" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5"/>
 
@@ -105,10 +105,10 @@
         <text x="450" y="326" fill="#ffffff">Java 21</text>
         <rect x="510" y="306" width="132" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
         <text x="576" y="326" fill="#ffffff">Spring Boot</text>
-        <rect x="654" y="306" width="100" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
-        <text x="704" y="326" fill="#ffffff">MySQL</text>
-        <rect x="766" y="306" width="96" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
-        <text x="814" y="326" fill="#ffffff">Maven</text>
+        <rect x="654" y="306" width="124" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+        <text x="716" y="326" fill="#ffffff">Em memória</text>
+        <rect x="790" y="306" width="96" height="30" rx="15" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+        <text x="838" y="326" fill="#ffffff">Maven</text>
       </g>
     </g>
   </g>
