@@ -1,0 +1,214 @@
+@baseUrl = http://127.0.0.1:8080
+
+### ==========================================
+### 1. FLUXO DE SUCESSO (CRUD COMPLETO)
+### ==========================================
+
+### 1.1 Criar Receita #1 (201 Created)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Bolo de Cenoura com Cobertura de Chocolate",
+  "duracaoDoPreparoMinutos": 67.0,
+  "ingredientes": [
+    "3 cenouras médias",
+    "4 ovos",
+    "2 xícaras de açúcar",
+    "2 e 1/2 xícaras de farinha de trigo",
+    "1 colher de sopa de fermento em pó"
+  ],
+  "tutorialPreparo": "Bata as cenouras, os ovos e o óleo no liquidificador, misture os secos e asse a 180°C por 40 minutos."
+}
+
+### 1.2 Criar Receita #2 para testes de listagem e paginação (201 Created)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Lasanha à Bolonhesa",
+  "duracaoDoPreparoMinutos": 90.0,
+  "ingredientes": [
+    "500g de massa para lasanha",
+    "500g de carne moída",
+    "2 sachês de molho de tomate",
+    "300g de queijo mussarela",
+    "300g de presunto"
+  ],
+  "tutorialPreparo": "Monte camadas alternadas de molho, massa, presunto e queijo. Leve ao forno por 30 minutos."
+}
+
+### 1.3 Criar Receita #3 no limite máximo permitido (1440 min -> 201 Created)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Pernil Marinado Assado Lentamente",
+  "duracaoDoPreparoMinutos": 1440.0,
+  "ingredientes": [
+    "1 peça de pernil suíno (3kg)",
+    "1 garrafa de vinho branco seco",
+    "6 dentes de alho amassados",
+    "Ramos de alecrim e sal a gosto"
+  ],
+  "tutorialPreparo": "Marine o pernil por 18 horas na geladeira e asse em fogo baixo coberto com papel-alumínio."
+}
+
+### 1.4 Listar todas (Paginação padrão)
+GET {{baseUrl}}/receitas
+
+### 1.5 Listar com paginação customizada e ordenação (Ex: página 0, tamanho 2)
+GET {{baseUrl}}/receitas?page=0&size=2&sort=nome,asc
+
+### 1.6 Filtrar por parte do nome (case-insensitive)
+GET {{baseUrl}}/receitas?nome=bolo
+
+### 1.7 Consultar por ID específico
+GET {{baseUrl}}/receitas/1
+
+### 1.8 Atualizar parcialmente por ID (PATCH)
+PATCH {{baseUrl}}/receitas/1
+Content-Type: application/json
+
+{
+  "nome": "Bolo de Cenoura Especial de Brigaderia",
+  "duracaoDoPreparoMinutos": 65.0,
+  "ingredientes": [
+    "3 cenouras médias",
+    "4 ovos",
+    "2 xícaras de açúcar",
+    "2 e 1/2 xícaras de farinha de trigo",
+    "1 lata de leite condensado",
+    "200g de chocolate meio amargo"
+  ],
+  "tutorialPreparo": "Prepare a massa tradicional e finalize cobrindo com brigadeiro cremoso meio amargo."
+}
+
+### 1.9 Excluir receita existente por ID (204 No Content)
+DELETE {{baseUrl}}/receitas/3
+
+
+
+### ==========================================
+### 2. VALIDAÇÕES DE ENTRADA (400 Bad Request)
+### ==========================================
+
+### 2.1 Nome em branco ou apenas espaços (400 Bad Request)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "   ",
+  "duracaoDoPreparoMinutos": 30.0,
+  "ingredientes": [
+    "2 ovos",
+    "1 colher de manteiga"
+  ],
+  "tutorialPreparo": "Frite os ovos na manteiga em fogo baixo."
+}
+
+### 2.2 Tutorial de preparo em branco (400 Bad Request)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Omelete Simples",
+  "duracaoDoPreparoMinutos": 15.0,
+  "ingredientes": [
+    "2 ovos",
+    "Sal a gosto"
+  ],
+  "tutorialPreparo": "   "
+}
+
+### 2.3 Duração do preparo menor ou igual a zero (400 Bad Request)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Receita Tempo Zero",
+  "duracaoDoPreparoMinutos": 0,
+  "ingredientes": [
+    "Água filtrada"
+  ],
+  "tutorialPreparo": "Sirva imediatamente."
+}
+
+### 2.4 Lista de Ingredientes vazia (400 Bad Request)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Receita Sem Ingredientes",
+  "duracaoDoPreparoMinutos": 20.0,
+  "ingredientes": [],
+  "tutorialPreparo": "Não há ingredientes para preparar."
+}
+
+### 2.5 Lista de Ingredientes contendo item em branco (400 Bad Request)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Salada de Tomate",
+  "duracaoDoPreparoMinutos": 10.0,
+  "ingredientes": [
+    "2 tomates maduros",
+    "   "
+  ],
+  "tutorialPreparo": "Corte os tomates em rodelas e tempere."
+}
+
+
+
+### ==========================================
+### 3. REGRAS DE NEGÓCIO (422 Unprocessable Entity)
+### ==========================================
+
+### 3.1 Criar receita com duração acima de 1.440 minutos / 24h (422 Unprocessable Entity)
+POST {{baseUrl}}/receitas
+Content-Type: application/json
+
+{
+  "nome": "Carne Maturada Artesanal",
+  "duracaoDoPreparoMinutos": 1441.0,
+  "ingredientes": [
+    "2kg de alcatra",
+    "Sal grosso"
+  ],
+  "tutorialPreparo": "Deixe maturar em temperatura controlada."
+}
+
+### 3.2 Atualizar receita com duração acima do limite no PATCH (422 Unprocessable Entity)
+PATCH {{baseUrl}}/receitas/1
+Content-Type: application/json
+
+{
+  "duracaoDoPreparoMinutos": 2000.0
+}
+
+
+
+### ==========================================
+### 4. VALIDAÇÕES DE ID E RECURSOS INEXISTENTES (400 / 404)
+### ==========================================
+
+### 4.1 Consultar receita com ID zero — inválido (400 Bad Request)
+GET {{baseUrl}}/receitas/0
+
+### 4.2 Consultar receita com ID negativo — inválido (400 Bad Request)
+GET {{baseUrl}}/receitas/-5
+
+### 4.3 Consultar receita com ID inexistente (404 Not Found)
+GET {{baseUrl}}/receitas/9999
+
+### 4.4 Atualizar receita com ID inexistente (404 Not Found)
+PATCH {{baseUrl}}/receitas/9999
+Content-Type: application/json
+
+{
+  "nome": "Receita Fantasma"
+}
+
+### 4.5 Excluir receita com ID inexistente (404 Not Found)
+DELETE {{baseUrl}}/receitas/9999
