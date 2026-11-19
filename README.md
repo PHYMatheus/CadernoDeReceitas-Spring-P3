@@ -10,15 +10,15 @@ A migração preserva integralmente o domínio, o armazenamento em memória *thr
 
 ## 1. Integrantes da Equipe e Detalhamento das Responsabilidades
 
-| Integrante | Papel Principal | Responsabilidades Detalhadas no Projeto |
-| :--- | :--- | :--- |
-| **Vinicius de Sousa Silva** | Model, DTOs & Contrato do Repositório | Criação da entidade `ReceitaCulinaria`, dos DTOs `ReceitaCulinariaInput` (`@NotBlank` e `@Positive`), `ReceitaCulinariaPage` (paginação) e `ReceitaCulinariaPatchInput` (atualização parcial via `JsonNode`), além da interface `ReceitaCulinariaRepository`. |
-| **Emanuel Vinícius de Souza** | Repositório em Memória & Concorrência | Implementação de `InMemoryReceitaCulinariaRepository` anotado com `@Repository` (Spring), utilizando `ConcurrentHashMap`, geração sequencial de ID com `AtomicLong`, atualização atômica com `computeIfPresent` e ordenação crescente por ID. |
-| **Matheus Guilherme de Paula Santos** | Service & Regra de Negócio Principal | Implementação de `ReceitaCulinariaService` (`@Service`) com injeção de `ReceitaCulinariaRepository` via construtor, validação de duração positiva (`> 0` → `400`), aplicação da regra de negócio do tema (limite máximo de 1.440 minutos → `422`) e tratamento de registro inexistente (`404`). |
-| **Pedro Henrique Pereira da Silva** | Validações Estruturais, Higienização & Filtro | Implementação das validações de campos textuais (`nome` e `TutorialPreparo`), higienização com `.trim()`, validação da lista de `Ingredientes` (mínimo de 1 item e sem itens em branco → `400`) e filtro parcial por nome *case-insensitive*. |
+| Integrante | Papel Principal | Responsabilidades Detalhadas no Projeto                                                                                                                                                                                                                                                                                                 |
+| :--- | :--- |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Vinicius de Sousa Silva** | Model, DTOs & Contrato do Repositório | Criação da entidade `ReceitaCulinaria`, dos DTOs `ReceitaCulinariaInput` (`@NotBlank` e `@Positive`),`ReceitaCulinariaPatchInput` (atualização parcial via `JsonNode`), além da interface `ReceitaCulinariaRepository`.                                                                                                                 |
+| **Emanuel Vinícius de Souza** | Repositório em Memória & Concorrência | Implementação de `InMemoryReceitaCulinariaRepository` anotado com `@Repository` (Spring), utilizando `ConcurrentHashMap`, geração sequencial de ID com `AtomicLong`, atualização atômica com `computeIfPresent` e ordenação crescente por ID.                                                                                           |
+| **Matheus Guilherme de Paula Santos** | Service & Regra de Negócio Principal | Implementação de `ReceitaCulinariaService` (`@Service`) com injeção de `ReceitaCulinariaRepository` via construtor, validação de duração positiva (`> 0` → `400`), aplicação da regra de negócio do tema (limite máximo de 1.440 minutos → `422`) e tratamento de registro inexistente (`404`).                                         |
+| **Pedro Henrique Pereira da Silva** | Validações Estruturais, Higienização & Filtro | Implementação das validações de campos textuais (`nome` e `TutorialPreparo`), higienização com `.trim()`, validação da lista de `Ingredientes` (mínimo de 1 item e sem itens em branco → `400`) e filtro parcial por nome *case-insensitive*.                                                                                           |
 | **Tainon Coutinho** | Controller & Mapeamento de Rotas Spring MVC | Implementação de `ReceitaCulinariaController` (`@RestController` e `@RequestMapping("/receitas")`) com injeção via construtor, mapeando `POST` (`201 Created` com cabeçalho `Location`), `GET` geral/filtrado (`200 OK`), `GET /{id}` (`200 OK`), `PUT /{id}` (`200 OK`), `PATCH /{id}` (`200 OK`) e `DELETE /{id}` (`204 No Content`). |
-| **João Felipe Falcão de Lima Salsa** | Camada Web, Tratamento Global de Erros & Filtros | Implementação da camada `web` (`ApiException`, `ApiError`, `ApiExceptionHandler` com `@RestControllerAdvice`, `ApiResponses` e `RequestIdFilter` com `OncePerRequestFilter`) e configuração do bootstrap em `CadernoDeReceitasApplication`. |
-| **Igor Gustavo de Brito Rocha** | Documentação & Suíte de Testes | Estruturação do repositório Spring Boot, elaboração dos testes automatizados (`ReceitaCulinariaControllerTest` e `ReceitaCulinariaServiceTest`), manutenção de `requests.http` e `receitas_postman_collection.json`, e redação final do `README.md`. |
+| **João Felipe Falcão de Lima Salsa** | Camada Web, Tratamento Global de Erros & Filtros | Implementação da camada `web` (`ApiException`, `ApiError`, `ApiExceptionHandler` com `@RestControllerAdvice`, `ApiResponses` e `RequestIdFilter` com `OncePerRequestFilter`) e configuração do bootstrap em `CadernoDeReceitasApplication`.                                                                                             |
+| **Igor Gustavo de Brito Rocha** | Documentação & Suíte de Testes | Estruturação do repositório Spring Boot, elaboração dos testes automatizados (`ReceitaCulinariaControllerTest` e `ReceitaCulinariaServiceTest`), manutenção de `requests.http` e `receitas_postman_collection.json`, e redação final do `README.md`.                                                                                    |
 
 ---
 
@@ -45,7 +45,7 @@ A separação entre a entidade persistida e os DTOs de entrada/paginação imped
 | **`ReceitaCulinaria`** | Entidade principal armazenada em memória e retornada nas respostas | `long id`, `String nome`, `Float duracaoDoPreparoMinutos`, `ArrayList<String> ingredientes`, `String tutorialPreparo` |
 | **`ReceitaCulinariaInput`** | DTO de entrada (`@RequestBody @Valid`) para `POST` e `PUT` | `@NotBlank String nome`, `@Positive float duracaoDoPreparoMinutos`, `ArrayList<String> Ingredientes`, `@NotBlank String TutorialPreparo` |
 | **`ReceitaCulinariaPatchInput`** | DTO para atualização parcial (`PATCH`), validando propriedades via `JsonNode` | `String nome`, `Float duracaoDoPreparoMinutos`, `ArrayList<String> Ingredientes`, `String TutorialPreparo` |
-| **`ReceitaCulinariaPage`** | DTO de resposta paginada para listagens | `List<ReceitaCulinariaInput> items`, `int page`, `int size`, `long totalElements`, `int totalPages` |
+
 
 ---
 
@@ -170,7 +170,6 @@ CadernoDeReceitas-Spring-P3/
 │   │   │   ├── model/
 │   │   │   │   ├── ReceitaCulinaria.java
 │   │   │   │   ├── ReceitaCulinariaInput.java
-│   │   │   │   ├── ReceitaCulinariaPage.java
 │   │   │   │   └── ReceitaCulinariaPatchInput.java
 │   │   │   ├── repository/
 │   │   │   │   ├── ReceitaCulinariaRepository.java
