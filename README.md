@@ -1,116 +1,125 @@
-<p align="center">
-  <img src="assets/banner.svg" alt="Caderno de Receitas — Projeto acadêmico de Programação III" width="100%"/>
-</p>
+![Banner Caderno de Receitas](./assets/banner.svg)
 
-<p align="center">
-  <img alt="Java 21" src="https://img.shields.io/badge/Java-21-orange?style=flat-square"/>
-  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?style=flat-square"/>
-  <img alt="Persistência em memória" src="https://img.shields.io/badge/persist%C3%AAncia-em%20mem%C3%B3ria-4479A1?style=flat-square"/>
-  <img alt="Maven" src="https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square"/>
-  <img alt="Status" src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow?style=flat-square"/>
-</p>
+# Caderno de Receitas — API REST (Migração para Spring Boot)
 
-# Caderno de Receitas
+API REST desenvolvida em **Java 21** com **Spring Boot** para gerenciamento de um **Caderno de Receitas Culinárias** (Tema 3), refatorada a partir da versão original construída sobre o framework acadêmico *Mini Spring* na disciplina de **Programação 3**.
 
-Projeto acadêmico da disciplina de **Programação III**, do curso de **Sistemas de Informação** (Unifacol).
-
-Este repositório é a **evolução** do projeto [CadernoDeReceitas-Project-P3](https://github.com/PHYMatheus/CadernoDeReceitas-Project-P3), que foi construído sobre o **Mini Spring**, um framework próprio com IoC, DI e roteamento por anotações. Agora a mesma API foi refatorada para o **Spring Boot**, mantendo as mesmas regras, as mesmas mensagens e a mesma persistência **em memória** do projeto original, como pedido pelo professor.
+A migração preserva integralmente o domínio, o armazenamento em memória *thread-safe*, o CRUD completo, os filtros de busca, as validações estruturais, a regra de negócio (limite de 1.440 minutos) e o contrato padronizado de respostas e erros HTTP.
 
 ---
 
-## Sumário
+## 1. Integrantes da Equipe e Detalhamento das Responsabilidades
 
-1. [O problema](#1-o-problema)
-2. [A solução](#2-a-solução)
-3. [Funcionalidades](#3-funcionalidades)
-4. [Regras de negócio](#4-regras-de-negócio)
-5. [Arquitetura](#5-arquitetura)
-6. [Do Mini Spring para o Spring Boot](#6-do-mini-spring-para-o-spring-boot)
-7. [Tecnologias](#7-tecnologias)
-8. [Estrutura do projeto](#8-estrutura-do-projeto)
-9. [Rotas da API](#9-rotas-da-api)
-10. [Como executar](#10-como-executar)
-11. [Testes](#11-testes)
-12. [Uso de IA](#12-uso-de-ia)
-13. [Equipe](#13-equipe)
+| Integrante | Papel Principal | Responsabilidades Detalhadas no Projeto |
+| :--- | :--- | :--- |
+| **Vinicius de Sousa Silva** | Model, DTOs & Contrato do Repositório | Criação da entidade `ReceitaCulinaria`, dos DTOs `ReceitaCulinariaInput` (`@NotBlank` e `@Positive`), `ReceitaCulinariaPage` (paginação) e `ReceitaCulinariaPatchInput` (atualização parcial via `JsonNode`), além da interface `ReceitaCulinariaRepository`. |
+| **Emanuel Vinícius de Souza** | Repositório em Memória & Concorrência | Implementação de `InMemoryReceitaCulinariaRepository` anotado com `@Repository` (Spring), utilizando `ConcurrentHashMap`, geração sequencial de ID com `AtomicLong`, atualização atômica com `computeIfPresent` e ordenação crescente por ID. |
+| **Matheus Guilherme de Paula Santos** | Service & Regra de Negócio Principal | Implementação de `ReceitaCulinariaService` (`@Service`) com injeção de `ReceitaCulinariaRepository` via construtor, validação de duração positiva (`> 0` → `400`), aplicação da regra de negócio do tema (limite máximo de 1.440 minutos → `422`) e tratamento de registro inexistente (`404`). |
+| **Pedro Henrique Pereira da Silva** | Validações Estruturais, Higienização & Filtro | Implementação das validações de campos textuais (`nome` e `TutorialPreparo`), higienização com `.trim()`, validação da lista de `Ingredientes` (mínimo de 1 item e sem itens em branco → `400`) e filtro parcial por nome *case-insensitive*. |
+| **Tainon Coutinho** | Controller & Mapeamento de Rotas Spring MVC | Implementação de `ReceitaCulinariaController` (`@RestController` e `@RequestMapping("/receitas")`) com injeção via construtor, mapeando `POST` (`201 Created` com cabeçalho `Location`), `GET` geral/filtrado (`200 OK`), `GET /{id}` (`200 OK`), `PUT /{id}` (`200 OK`), `PATCH /{id}` (`200 OK`) e `DELETE /{id}` (`204 No Content`). |
+| **João Felipe Falcão de Lima Salsa** | Camada Web, Tratamento Global de Erros & Filtros | Implementação da camada `web` (`ApiException`, `ApiError`, `ApiExceptionHandler` com `@RestControllerAdvice`, `ApiResponses` e `RequestIdFilter` com `OncePerRequestFilter`) e configuração do bootstrap em `CadernoDeReceitasApplication`. |
+| **Igor Gustavo de Brito Rocha** | Documentação & Suíte de Testes | Estruturação do repositório Spring Boot, elaboração dos testes automatizados (`ReceitaCulinariaControllerTest` e `ReceitaCulinariaServiceTest`), manutenção de `requests.http` e `receitas_postman_collection.json`, e redação final do `README.md`. |
 
 ---
 
-## 1. O problema
+## 2. Descrição do Domínio (Tema 3 — Caderno de Receitas)
 
-Receitas costumam ficar espalhadas: caderno de papel que estraga, print no WhatsApp, aba do navegador que some, ou só na memória de quem cozinha. Resultado:
+Conforme a especificação do tema sorteado (**Tema 3: Caderno de receitas — Receitas culinárias**), o sistema permite cadastrar, listar, paginar, filtrar por parte do nome (desconsiderando maiúsculas e minúsculas), consultar por identificador (`id`), atualizar total ou parcialmente preservando o ID original e excluir receitas culinárias, mantendo todos os registros em memória.
 
-| Dificuldade | O que o usuário precisa |
-|---|---|
-| Perder ou não achar uma receita | Um lugar único para guardar e consultar tudo |
-| Lembrar só de parte do nome | Busca por trecho do nome, sem se preocupar com maiúsculas e minúsculas |
-| Receitas escritas sem padrão | Um formato padronizado: nome, tempo, ingredientes e modo de preparo |
+### Especificação do Tema Sorteado vs. Implementação no Spring Boot
 
-## 2. A solução
+| Item do Tema Sorteado | Especificação da Atividade | Implementação no Código (`br.com.CadernoDeReceitas`) |
+| :--- | :--- | :--- |
+| **Tema / Domínio** | 3 — Caderno de receitas (Receitas culinárias) | Entidade `ReceitaCulinaria` e DTOs de entrada/saída |
+| **Rota Base** | `/receitas` | `@RestController` + `@RequestMapping("/receitas")` em `ReceitaCulinariaController` |
+| **Campo Textual Obrigatório** | `nome` | `@NotBlank String nome` (somado a `ArrayList<String> Ingredientes` e `@NotBlank String TutorialPreparo`) |
+| **Campo Numérico Positivo** | `tempoPreparoMinutos` | `@Positive float duracaoDoPreparoMinutos` (`> 0`) |
+| **Regra de Negócio (`422`)** | Máximo de 1.440 minutos de preparo | Validação do limite de `1440` minutos em `ReceitaCulinariaService` |
 
-Uma **API REST** em Java com Spring Boot que permite cadastrar, consultar, atualizar, excluir e buscar receitas. Os dados ficam **em memória** (`ConcurrentHashMap`), como no projeto original, e são perdidos quando a aplicação é reiniciada. As regras de negócio ficam concentradas na camada Service, e a API devolve respostas HTTP previsíveis (201, 200, 204, 400, 404 e 422).
+### Modelos de Dados (`Records`)
 
-## 3. Funcionalidades
+A separação entre a entidade persistida e os DTOs de entrada/paginação impede que o cliente envie ou altere o `id` manualmente nas requisições de escrita:
 
-- Cadastrar, listar, consultar por ID, atualizar e excluir receitas.
-- Filtrar por parte do nome, ignorando maiúsculas e minúsculas.
-- ID gerado automaticamente em sequência (`AtomicLong`) e preservado nas atualizações.
-- Validação de entrada com mensagens claras.
-- Formato de erro padronizado, com identificador da requisição (`X-Request-Id`).
-- Limite de 1 MiB no corpo das requisições (`413`).
+| Classe (`Record`) | Finalidade | Campos |
+| :--- | :--- | :--- |
+| **`ReceitaCulinaria`** | Entidade principal armazenada em memória e retornada nas respostas | `long id`, `String nome`, `Float duracaoDoPreparoMinutos`, `ArrayList<String> ingredientes`, `String tutorialPreparo` |
+| **`ReceitaCulinariaInput`** | DTO de entrada (`@RequestBody @Valid`) para `POST` e `PUT` | `@NotBlank String nome`, `@Positive float duracaoDoPreparoMinutos`, `ArrayList<String> Ingredientes`, `@NotBlank String TutorialPreparo` |
+| **`ReceitaCulinariaPatchInput`** | DTO para atualização parcial (`PATCH`), validando propriedades via `JsonNode` | `String nome`, `Float duracaoDoPreparoMinutos`, `ArrayList<String> Ingredientes`, `String TutorialPreparo` |
+| **`ReceitaCulinariaPage`** | DTO de resposta paginada para listagens | `List<ReceitaCulinariaInput> items`, `int page`, `int size`, `long totalElements`, `int totalPages` |
 
-## 4. Regras de negócio
+---
 
-As regras ficam no `ReceitaCulinariaService` e são aplicadas da mesma forma no cadastro e na atualização. Toda validação acontece **antes** de chamar o repositório, então uma operação rejeitada não altera os dados armazenados.
+## 3. Principais Mudanças na Migração (Mini Spring → Spring Boot)
 
-| Regra | Critério | Status | Mensagem |
-|---|---|---|---|
-| Nome obrigatório | Não aceita nulo, vazio ou só espaços. É salvo sem espaços nas pontas (`trim`). | `400` | `nome não pode estar em branco!` |
-| Modo de preparo obrigatório | `TutorialPreparo` não aceita nulo, vazio ou só espaços. É salvo com `trim`. | `400` | `TutorialPreparo não pode estar em branco!` |
-| Ingredientes | A lista deve ter pelo menos um item, e nenhum item pode ser vazio. Cada item é salvo com `trim`. | `400` | `Ingredientes deve ter pelo menos um item!` ou `Ingredientes não pode ter item em branco!` |
-| Tempo positivo | `duracaoDoPreparoMinutos` deve ser maior que zero. | `400` | `duracaoDoPreparoMinutos deve ser maior que zero!` |
-| **Tempo máximo (regra do tema)** | `duracaoDoPreparoMinutos` pode ser no máximo **1.440 minutos** (24 horas). O valor 1.440 é aceito. | `422` | `Uma Receita pode ter no Máximo 1.440 Minutos!` |
-| ID válido | O ID deve ser maior que zero. | `400` | `ID inválido!` |
-| Receita existente | Consulta, atualização e exclusão exigem que o ID exista. | `404` | `Receita culinária não encontrada!` |
+Na versão anterior, a infraestrutura web, o container de injeção de dependências e o validador eram implementados manualmente dentro do pacote `br.com.minispring.framework`. Na migração para o **Spring Boot**, o framework assumiu essas responsabilidades de forma nativa:
 
-As validações são feitas nesta ordem: nome, TutorialPreparo, Ingredientes, tempo positivo e tempo máximo.
+| Aspecto Arquitetural | Como era no Mini Spring | Como ficou no Spring Boot |
+| :--- | :--- | :--- |
+| **Bootstrap e Servidor Web** | `MiniApplication.run(Application.class)` subindo um servidor **Jetty** configurado manualmente. | `@SpringBootApplication` em `CadernoDeReceitasApplication` com **Apache Tomcat** embutido e autoconfiguração. |
+| **Container IoC e DI** | `ComponentScanner` e `ApplicationContext` próprios varrendo classes por *Reflection* com anotações customizadas (`@Service`, `@Repository`, `@RestController`). | Container oficial do **Spring Framework** (`org.springframework.stereotype.*`), mantendo a injeção de dependências exclusivamente via construtor. |
+| **Roteamento e Respostas HTTP** | `DispatcherServlet` e `Router` próprios com `@Route`, `@PathVariable`, `@RequestParam` customizados e retorno via `HttpResult`. | **Spring Web MVC** (`@GetMapping`, `@PostMapping`, `@PutMapping`, `@PatchMapping`, `@DeleteMapping`, `@PathVariable`, `@RequestParam`, `@RequestBody`) e respostas tipadas com `ResponseEntity<T>`. |
+| **Validação de Dados** | Classe `Validator` artesanal via *Reflection* processando anotações próprias `@NotBlank` e `@Positive`. | **Jakarta Bean Validation** (`jakarta.validation.constraints.*`) integrado ao Spring via `@Valid`, somado à validação estrutural de `PATCH` com `JsonNode`. |
+| **Tratamento Global de Erros** | `try/catch` centralizado no `DispatcherServlet` capturando `HttpException`. | Camada dedicada `br.com.CadernoDeReceitas.web` com `ApiExceptionHandler` (`@RestControllerAdvice` + `@ExceptionHandler`) e `ApiException`, padronizando respostas `ApiError`. |
+| **Interceptação e Logs** | `LoggingInterceptor` próprio do Mini Spring gerando `X-Request-Id` e medindo latência. | `RequestIdFilter` estendendo `OncePerRequestFilter` (`@Component`), mantendo o cabeçalho `X-Request-Id`, o log de tempo em ms e a trava de payload máximo de **1 MiB** (`413 Payload Too Large`). |
+| **Testes Automatizados** | Apenas testes manuais via `requests.http`. | Inclusão de testes unitários e de integração da camada web com **JUnit 5** e **Spring Boot Test** (`ReceitaCulinariaServiceTest` e `ReceitaCulinariaControllerTest`), além de `requests.http` e coleção Postman. |
 
-## 5. Arquitetura
+---
 
-Arquitetura em camadas, cada uma com uma responsabilidade:
+## 4. Regra de Negócio e Validações HTTP
 
-```
-Cliente HTTP (navegador / Postman / curl)
-                │
-                ▼
-┌────────────────────────────────┐
-│  RequestIdFilter               │  gera X-Request-Id, registra log, limita corpo a 1 MiB
-└───────────────┬────────────────┘
-                ▼
-┌────────────────────────────────┐
-│  Controller  (@RestController) │  recebe HTTP, delega, devolve status
-└───────────────┬────────────────┘
-                ▼
-┌────────────────────────────────┐
-│  Service     (@Service)        │  regras de negócio, validações e normalização
-└───────────────┬────────────────┘
-                ▼
-┌────────────────────────────────┐
-│  Repository  (@Repository)     │  armazenamento em memória
-└───────────────┬────────────────┘
-                ▼
-     ConcurrentHashMap + AtomicLong
+Todas as validações estruturais (`400`) e a regra de negócio (`422`) são aplicadas tanto no cadastro (`POST /receitas`) quanto nas atualizações (`PUT` e `PATCH`). Caso qualquer validação falhe, uma exceção (`ApiException` ou `MethodArgumentNotValidException`) interrompe o fluxo antes de qualquer escrita no repositório, garantindo que operações rejeitadas não modifiquem os dados em memória.
 
-Erros em qualquer camada → ApiExceptionHandler (@RestControllerAdvice) → JSON padronizado
-```
+| Regra / Validação | Critério Aplicado | Status HTTP | Mensagem / Comportamento |
+| :--- | :--- | :--- | :--- |
+| **Regra de Negócio (Tempo Máximo)** | `duracaoDoPreparoMinutos` não pode ultrapassar **1.440 minutos** (24 horas de preparo). | `422 Unprocessable Content` | `"Uma Receita pode ter no Máximo 1.440 Minutos!"` |
+| **Nome obrigatório** | `nome` não pode ser nulo, vazio (`""`) ou conter apenas espaços. É salvo com `.trim()`. | `400 Bad Request` | `"Falha de validação"` (detalhe no campo `nome`) |
+| **Tutorial de preparo obrigatório** | `TutorialPreparo` não pode ser nulo, vazio ou apenas espaços. É salvo com `.trim()`. | `400 Bad Request` | `"Falha de validação"` (detalhe no campo `TutorialPreparo`) |
+| **Duração positiva** | `duracaoDoPreparoMinutos` deve ser estritamente maior que zero (`> 0`). | `400 Bad Request` | `"Falha de validação"` (detalhe no campo `duracaoDoPreparoMinutos`) |
+| **Ingredientes obrigatórios** | A lista `Ingredientes` deve ter pelo menos 1 item e nenhum item nulo ou em branco. Cada item recebe `.trim()`. | `400 Bad Request` | `"Ingredientes deve ter pelo menos um item!"` ou `"Ingredientes não pode ter item em branco!"` |
+| **Validação de ID e Parâmetros** | O `{id}` na URL deve ser um número inteiro positivo (`> 0`). | `400 Bad Request` | `"Parâmetro inválido: id"` ou mensagem de ID inválido |
+| **Registro ou Rota Inexistente** | Consultas (`GET`), atualizações (`PUT`/`PATCH`) e exclusões (`DELETE`) exigem que o `id` exista; rotas desconhecidas também retornam `404`. | `404 Not Found` | `"Receita culinária não encontrada!"` ou `"Rota não encontrada"` |
+| **Método HTTP não permitido** | Uso de verbo HTTP não suportado em uma rota existente. | `405 Method Not Allowed` | `"Método HTTP não permitido"` + cabeçalho `Allow` |
+| **Limite de Tamanho do Corpo** | Requisições `POST`, `PUT` ou `PATCH` com payload superior a **1 MiB** (`1.048.576 bytes`). | `413 Payload Too Large` | `"Corpo excede 1 MiB"` |
+| **Tipo de Mídia / JSON Inválido** | Envio sem `Content-Type: application/json` (`415`) ou JSON malformado / tipos incompatíveis (`400`). | `415` / `400` | `"Tipo de mídia não suportado"` / `"JSON inválido ou incompatível com os campos esperados"` |
 
-- **Injeção de dependências por construtor**: o Spring injeta `InMemoryReceitaCulinariaRepository` no Service pela interface `ReceitaCulinariaRepository`.
-- O Controller não tem regra de negócio. O Service concentra as validações e lança `ApiException` com o status (400, 404 ou 422).
-- Os erros são tratados em um único ponto (`ApiExceptionHandler`), sempre com o mesmo formato:
+---
+
+## 5. Rotas da API (Endpoints)
+
+Todas as rotas estão mapeadas sob `/receitas` na classe `ReceitaCulinariaController`:
+
+| Método | Rota | Descrição | Status de Sucesso | Status de Erro Possíveis |
+| :--- | :--- | :--- | :--- | :--- |
+| **`POST`** | `/receitas` | Cadastra uma nova receita culinária gerando o `id` sequencial automaticamente. | `201 Created` (com cabeçalho `Location: /receitas/{id}`) | `400`, `413`, `415`, `422` |
+| **`GET`** | `/receitas` | Lista todas as receitas cadastradas em ordem crescente de `id`. | `200 OK` | `405` |
+| **`GET`** | `/receitas?nome={texto}` | Filtra receitas por parte do nome, desconsiderando maiúsculas e minúsculas (*case-insensitive*). | `200 OK` | `405` |
+| **`GET`** | `/receitas/{id}` | Consulta uma receita culinária específica pelo seu `id`. | `200 OK` | `400`, `404`, `405` |
+| **`PUT`** | `/receitas/{id}` | Atualiza todos os dados de uma receita existente preservando seu `id`. | `200 OK` | `400`, `404`, `405`, `413`, `415`, `422` |
+| **`PATCH`** | `/receitas/{id}` | Atualiza parcialmente apenas os campos enviados no JSON de uma receita existente. | `200 OK` | `400`, `404`, `405`, `413`, `415`, `422` |
+| **`DELETE`** | `/receitas/{id}` | Exclui uma receita existente pelo seu `id`, sem corpo na resposta. | `204 No Content` | `400`, `404`, `405` |
+
+### Exemplo de Corpo JSON (`POST /receitas` e `PUT /receitas/{id}`)
 
 ```json
 {
-  "timestamp": "2026-11-18T14:00:00Z",
+  "nome": "Bolo de Cenoura com Cobertura de Chocolate",
+  "duracaoDoPreparoMinutos": 50.0,
+  "Ingredientes": [
+    "3 cenouras médias",
+    "4 ovos",
+    "2 xícaras de açúcar",
+    "2 e 1/2 xícaras de farinha de trigo",
+    "1 colher de sopa de fermento em pó"
+  ],
+  "TutorialPreparo": "Bata as cenouras, os ovos e o óleo no liquidificador, misture os secos e asse a 180°C por 40 minutos."
+}
+```
+
+### Exemplo de Resposta de Erro Padronizada (`ApiError`)
+
+```json
+{
+  "timestamp": "2026-11-19T13:00:00Z",
   "status": 422,
   "message": "Uma Receita pode ter no Máximo 1.440 Minutos!",
   "path": "/receitas",
@@ -119,169 +128,132 @@ Erros em qualquer camada → ApiExceptionHandler (@RestControllerAdvice) → JSO
 }
 ```
 
-## 6. Do Mini Spring para o Spring Boot
+---
 
-A refatoração trocou as peças do framework próprio pelas equivalentes do Spring Boot, mantendo as regras e o comportamento da API:
+## 6. Arquitetura em Camadas, IoC/DI e Caminho da Requisição
 
-| Mini Spring | Spring Boot |
-|---|---|
-| `ApplicationContext` e `ComponentScanner` | Container IoC e component scan do Spring |
-| `@Service`, `@Repository`, `@RestController` | Mesmas anotações, agora do Spring |
-| `@Route(method, path)` | `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping` |
-| `@PathVariable`, `@RequestParam`, `@RequestBody` | Mesmas anotações, agora do Spring |
-| `Validator`, `@NotBlank`, `@Positive` | Bean Validation (`jakarta.validation`: `@NotBlank`, `@Positive`) + validações no Service |
-| `HttpException(status, mensagem)` + tratamento no `DispatcherServlet` | `ApiException(status, mensagem)` + `ApiExceptionHandler` (`@RestControllerAdvice`) |
-| `LoggingInterceptor` (`X-Request-Id`) | `RequestIdFilter` (`OncePerRequestFilter`) |
-| Jetty embutido | Servidor embutido do Spring Boot |
-| `InMemoryReceitaCulinariaRepository` com `ConcurrentHashMap` | **Mantido**: `InMemoryReceitaCulinariaRepository` com `ConcurrentHashMap` e `AtomicLong` |
-| Testes com JUnit 5 e Jetty real | JUnit 5 + Spring Boot Test |
+### 6.1 Responsabilidades das Camadas
 
-## 7. Tecnologias
+* **`controller` (`ReceitaCulinariaController`)**: Camada de apresentação REST. Recebe requisições HTTP, extrai `@RequestBody`, `@PathVariable` e `@RequestParam`, delega a execução ao `ReceitaCulinariaService` e monta a resposta HTTP via `ResponseEntity` (incluindo o cabeçalho `Location` na criação).
+* **`service` (`ReceitaCulinariaService`)**: Camada de regras de negócio. Valida restrições de domínio (`400` e `422`), higieniza strings com `.trim()`, executa o filtro *case-insensitive* por nome e verifica existência de registros (`404`).
+* **`repository` (`ReceitaCulinariaRepository` e `InMemoryReceitaCulinariaRepository`)**: Camada de acesso a dados em memória. Define o contrato via interface e armazena os registros em `ConcurrentHashMap<Long, ReceitaCulinaria>`, gerando IDs com `AtomicLong` e preservando o ID original nas atualizações com `computeIfPresent`.
+* **`web` (`RequestIdFilter`, `ApiExceptionHandler`, `ApiException`, `ApiError`, `ApiResponses`)**: Camada transversal de infraestrutura HTTP responsável por rastreabilidade (`X-Request-Id`), limite de tamanho de corpo (1 MiB), logs de latência e conversão global de exceções em JSON padronizado.
 
-- **Java 21**
-- **Spring Boot 4.1.2**: Web MVC, Validation, Actuator e DevTools
-- **Lombok**
-- **Maven**, com Maven Wrapper (`mvnw` / `mvnw.cmd`)
-- **JUnit 5** e **Spring Boot Test**
+### 6.2 Inversão de Controle (IoC) e Injeção de Dependências (DI)
 
-## 8. Estrutura do projeto
+1. Ao executar `CadernoDeReceitasApplication.main`, o `@SpringBootApplication` ativa o *Component Scan* automático a partir do pacote `br.com.CadernoDeReceitas`.
+2. O container IoC do Spring instancia e gerencia os *beans* anotados com `@Repository` (`InMemoryReceitaCulinariaRepository`), `@Service` (`ReceitaCulinariaService`), `@RestController` (`ReceitaCulinariaController`), `@RestControllerAdvice` (`ApiExceptionHandler`) e `@Component` (`RequestIdFilter`).
+3. As dependências são resolvidas exclusivamente **via construtor** (sem uso de `@Autowired` em atributos), garantindo imutabilidade (`final`), baixo acoplamento (o `Service` depende da interface `ReceitaCulinariaRepository`) e facilidade para testes unitários.
 
-```
-CadernoDeReceitas-SpringBoot/
+### 6.3 Caminho Completo de uma Requisição HTTP
+
+1. **Tomcat Embutido & `RequestIdFilter`**: Recebe a requisição HTTP, gera um `UUID` (`X-Request-Id`), verifica se o corpo não ultrapassa 1 MiB (`413` caso exceda) e armazena os bytes em `CachedBodyRequest` para leitura segura.
+2. **`DispatcherServlet` (Spring MVC)**: Localiza o método correspondente em `ReceitaCulinariaController` (retornando `404` se a rota não existir ou `405` com header `Allow` se o verbo HTTP não for permitido).
+3. **Desserialização e Bean Validation**: O Jackson converte o JSON em `ReceitaCulinariaInput` (ou `JsonNode` no `PATCH`) e o `@Valid` executa `@NotBlank` e `@Positive`.
+4. **Camadas de Negócio e Dados (`Controller → Service → Repository`)**: O `ReceitaCulinariaService` valida a lista de ingredientes e o limite máximo de 1.440 minutos, interagindo com o `InMemoryReceitaCulinariaRepository`.
+5. **Resposta ou Tratamento Global (`ApiExceptionHandler`)**: Em caso de sucesso, o `Controller` devolve o `ResponseEntity` (`200`, `201` ou `204`). Em caso de erro, o `@RestControllerAdvice` intercepta a exceção e retorna o `ApiError` correspondente. Por fim, o bloco `finally` do `RequestIdFilter` registra no log o método, URI, status HTTP e tempo de execução em milissegundos.
+
+---
+
+## 7. Estrutura de Diretórios
+
+```text
+CadernoDeReceitas-Spring-P3/
 ├── assets/
 │   └── banner.svg
-├── src/main/java/br/com/CadernoDeReceitas/
-│   ├── CadernoDeReceitasApplication.java
-│   ├── controller/
-│   │   └── ReceitaCulinariaController.java
-│   ├── service/
-│   │   └── ReceitaCulinariaService.java          # regras de negócio
-│   ├── repository/
-│   │   ├── ReceitaCulinariaRepository.java       # interface
-│   │   └── InMemoryReceitaCulinariaRepository.java
-│   ├── model/
-│   │   ├── ReceitaCulinaria.java                 # entidade (record)
-│   │   ├── ReceitaCulinariaInput.java            # entrada do POST e do PUT
-│   │   ├── ReceitaCulinariaPatchInput.java       # entrada da atualização parcial
-│   │   └── ReceitaCulinariaPage.java
-│   └── web/
-│       ├── ApiException.java
-│       ├── ApiError.java                         # formato padrão de erro
-│       ├── ApiExceptionHandler.java              # @RestControllerAdvice
-│       ├── ApiResponses.java
-│       └── RequestIdFilter.java                  # X-Request-Id, log e limite de 1 MiB
-├── src/main/resources/
-│   └── application.properties
-├── src/test/java/br/com/CadernoDeReceitas/
-│   ├── CadernoDeReceitasApplicationTests.java
-│   └── service/
-│       └── ReceitaCulinariaServiceTest.java
-├── .mvn/wrapper/maven-wrapper.properties
-├── mvnw / mvnw.cmd
+├── src/
+│   ├── main/
+│   │   ├── java/br/com/CadernoDeReceitas/
+│   │   │   ├── CadernoDeReceitasApplication.java
+│   │   │   ├── controller/
+│   │   │   │   └── ReceitaCulinariaController.java
+│   │   │   ├── model/
+│   │   │   │   ├── ReceitaCulinaria.java
+│   │   │   │   ├── ReceitaCulinariaInput.java
+│   │   │   │   ├── ReceitaCulinariaPage.java
+│   │   │   │   └── ReceitaCulinariaPatchInput.java
+│   │   │   ├── repository/
+│   │   │   │   ├── ReceitaCulinariaRepository.java
+│   │   │   │   └── InMemoryReceitaCulinariaRepository.java
+│   │   │   ├── service/
+│   │   │   │   └── ReceitaCulinariaService.java
+│   │   │   └── web/
+│   │   │       ├── ApiError.java
+│   │   │       ├── ApiException.java
+│   │   │       ├── ApiExceptionHandler.java
+│   │   │       ├── ApiResponses.java
+│   │   │       └── RequestIdFilter.java
+│   │   └── resources/
+│   │       └── application.properties
+│   └── test/
+│       └── java/br/com/CadernoDeReceitas/
+│           ├── CadernoDeReceitasApplicationTests.java
+│           ├── controller/
+│           │   └── ReceitaCulinariaControllerTest.java
+│           └── service/
+│               └── ReceitaCulinariaServiceTest.java
+├── mvnw
+├── mvnw.cmd
 ├── pom.xml
+├── receitas_postman_collection.json
+├── requests.http
 └── README.md
 ```
 
-## 9. Rotas da API
+---
 
-> **Situação atual:** o `ReceitaCulinariaController` ainda está sendo implementado. As rotas abaixo são o contrato da API, o mesmo do projeto original, e o Service já tem um método pronto para cada uma.
+## 8. Instruções de Execução e Testes
 
-Rota base: `/receitas`
+### 8.1 Pré-requisitos
 
-| Método | Rota | Descrição | Método do Service | Sucesso | Erros possíveis |
-|---|---|---|---|---|---|
-| `POST` | `/receitas` | Cadastra uma receita | `create` | `201` + header `Location: /receitas/{id}` | `400`, `413`, `415`, `422` |
-| `GET` | `/receitas` | Lista todas as receitas, em ordem de ID | `listAll` | `200` | — |
-| `GET` | `/receitas?nome={trecho}` | Filtra por parte do nome | `listByName` | `200` | — |
-| `GET` | `/receitas/{id}` | Consulta por ID | `findById` | `200` | `400`, `404` |
-| `PUT` | `/receitas/{id}` | Atualiza uma receita, preservando o ID | `update` | `200` | `400`, `404`, `413`, `415`, `422` |
-| `DELETE` | `/receitas/{id}` | Exclui uma receita | `deleteById` | `204` | `400`, `404` |
+* **Java 21** (JDK 21) instalado e configurado no `PATH`
+* **Maven 3.8+** (opcional, pois o projeto já inclui o **Maven Wrapper** `./mvnw` e `mvnw.cmd`)
 
-O Service também tem o método `patch`, pronto para uma atualização parcial (só os campos enviados), com as mesmas validações e a mesma regra dos 1.440 minutos.
+### 8.2 Como Executar a Aplicação
 
-### Códigos de erro
+No terminal, dentro da pasta raiz do projeto (onde está localizado o `pom.xml`), execute:
 
-| Status | Quando acontece |
-|---|---|
-| `400` | Entrada inválida (campo vazio, tempo menor ou igual a zero, lista de ingredientes vazia, ID inválido, JSON malformado) |
-| `404` | Receita inexistente ou rota inexistente |
-| `405` | Método HTTP não permitido na rota (com header `Allow`) |
-| `413` | Corpo da requisição maior que 1 MiB |
-| `415` | `Content-Type` diferente de `application/json` |
-| `422` | Regra de negócio violada (tempo acima de 1.440 minutos) |
-| `500` | Erro inesperado (sem expor detalhes internos) |
-
-### Exemplo de cadastro
-
-```http
-POST /receitas
-Content-Type: application/json
-
-{
-  "nome": "Brigadeiro de colher",
-  "duracaoDoPreparoMinutos": 15,
-  "Ingredientes": ["1 lata de leite condensado", "3 colheres de chocolate em pó", "1 colher de manteiga"],
-  "TutorialPreparo": "Misture tudo em uma panela e cozinhe em fogo baixo, mexendo sempre, até desgrudar do fundo."
-}
+**Linux / macOS:**
+```bash
+./mvnw spring-boot:run
 ```
 
-> Os campos `Ingredientes` e `TutorialPreparo` começam com letra maiúscula, igual ao projeto original.
-
-## 10. Como executar
-
-### Pré-requisitos
-
-- Java 21
-- Não é preciso instalar o Maven: o projeto usa o Maven Wrapper (`mvnw`), que baixa a versão correta (3.9.16) sozinho.
-- Não é preciso banco de dados.
-
-### Passo a passo
-
+**Windows (PowerShell / CMD):**
 ```bash
-# 1. Clonar o repositório
-git clone https://github.com/PHYMatheus/CadernoDeReceitas-Spring-P3.git
-cd CadernoDeReceitas-Spring-P3
-
-# 2. Executar a aplicação (Linux, macOS ou Git Bash)
-./mvnw spring-boot:run
-
-# No Windows (CMD ou PowerShell)
 mvnw.cmd spring-boot:run
 ```
 
-A aplicação sobe em `http://localhost:8080`. A saúde da aplicação pode ser verificada em `http://localhost:8080/actuator/health`.
+*(Alternativamente, caso tenha o Maven instalado globalmente, execute `mvn spring-boot:run`.)*
 
-As receitas ficam em memória e são apagadas quando a aplicação é reiniciada.
+A API estará disponível em: **`http://localhost:8080/receitas`**
 
-## 11. Testes
+### 8.3 Como Executar os Testes Automatizados
+
+Para rodar toda a suíte de testes unitários e de integração (`ReceitaCulinariaServiceTest` e `ReceitaCulinariaControllerTest`):
 
 ```bash
+# Linux / macOS
 ./mvnw test
+
+# Windows
+mvnw.cmd test
 ```
 
-| Teste | O que verifica |
-|---|---|
-| `ReceitaCulinariaServiceTest` | As regras do Service: cadastro com `trim` e ID sequencial, limite exato de 1.440 minutos, erros `400`, `404` e `422` com as mensagens corretas, filtro por nome sem diferenciar maiúsculas, preservação do ID na atualização, atualização parcial (`patch`) e a garantia de que uma operação rejeitada não altera os dados. |
-| `CadernoDeReceitasApplicationTests` | Se a aplicação Spring sobe corretamente (`contextLoads`). |
+### 8.4 Testes Manuais via `requests.http` e Postman
 
-## 12. Uso de IA
+O repositório disponibiliza dois recursos prontos para testar todos os cenários de sucesso (`201`, `200`, `204`) e erro (`400`, `404`, `405`, `413`, `415`, `422`):
+* **`requests.http`**: Arquivo executável diretamente no IntelliJ IDEA ou VS Code (extensão *REST Client*).
+* **`receitas_postman_collection.json`**: Coleção completa pronta para importação no **Postman**.
 
-Foi utilizada IA (Claude, da Anthropic) como apoio no projeto: explicações de conceitos, revisão de arquitetura, rascunho de documentação e sugestões de código. Todo o código entregue foi revisado, e cada integrante é responsável por compreender e explicar o que foi desenvolvido.
+---
 
-## 13. Equipe
+## 9. Declaração de Uso de Inteligência Artificial
 
-| Nome | Responsabilidade |
-|---|---|
-| Matheus | Desenvolvimento e Arquitetura |
-| Igor | Desenvolvimento e Arquitetura |
-| Vinicius | Desenvolvimento e Arquitetura |
-| Pedro Henrique | Desenvolvimento e Arquitetura |
-| Tainon | Desenvolvimento e Arquitetura |
-| João Felipe | Desenvolvimento e Arquitetura |
-| Emanuel Vinicius | Desenvolvimento e Arquitetura |
+Em conformidade com as regras da avaliação, declaramos que ferramentas de Inteligência Artificial Generativa foram utilizadas como apoio para:
 
-**Disciplina:** Programação III
-**Curso:** Sistemas de Informação
-**Professor:** Alisson Ferreira
-**Instituição:** Unifacol
-**Período/Ano:** *(semestre/ano)*
+* Estruturação e revisão da documentação deste `README.md` de acordo com os requisitos da atividade;
+* Revisão das validações e respostas HTTP do domínio.
+
+O projeto foi desenvolvido com o apoio de ferramentas de Inteligência Artificial (IA) para esclarecimento de dúvidas, auxílio nos estudos e compreensão do código, servindo como suporte ao processo de aprendizagem e desenvolvimento, sem substituir o estudo e o entendimento dos conceitos utilizados.
+
+Todos os integrantes do grupo revisaram e compreendem integralmente o código entregue, a divisão de responsabilidades em camadas, a injeção de dependências e o caminho percorrido por cada requisição HTTP.
