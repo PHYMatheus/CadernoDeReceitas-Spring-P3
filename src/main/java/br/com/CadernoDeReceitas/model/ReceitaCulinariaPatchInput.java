@@ -4,7 +4,6 @@ import br.com.CadernoDeReceitas.web.ApiException;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public record ReceitaCulinariaPatchInput(
